@@ -1,0 +1,44 @@
+name: Release
+
+on:
+  push:
+
+jobs:
+
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Check out the codebase.
+        uses: actions/checkout@v2
+
+      - name: Get Current Time
+        uses: 1466587594/get-current-time@v2.0.0
+        id: current-time
+        with:
+          format: YYYY.MM.DD
+
+      - name: Build packages
+        run: ./bin/dist v${{ steps.current-time.outputs.formattedTime }}
+
+      - run: ls pkg
+
+      - name: Create release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+      
+      - name: Upload relase assets
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: pkg/terraform-inventory_v${{ steps.current-time.outputs.formattedTime }}_darwin_amd64.zip
+          asset_name: terraform-inventory_v${{ steps.current-time.outputs.formattedTime }}_darwin_amd64.zip
+          asset_content_type: application/zip
